@@ -7,6 +7,10 @@
 #include "NES/RomData.h"
 #include "Utilities/VirtualFile.h"
 
+#ifdef FCPICO
+#include "NES/Mappers/Homebrew/FcPico.h"
+#endif
+
 #include "NES/Mappers/Bandai/Bandai74161_7432.h"
 #include "NES/Mappers/Bandai/BandaiFcg.h"
 #include "NES/Mappers/Bandai/BandaiKaraoke.h"
@@ -279,6 +283,9 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData& romData)
 {
 	// clang-format off
 	switch(romData.Info.MapperID) {
+#ifdef FCPICO
+		case 4093: return new FcPico(); // Private co-simulation mapper, never flashed.
+#endif
 		case 0: return new NROM();
 		case 1: return new MMC1();
 		case 2: return new UNROM();
@@ -667,4 +674,3 @@ unique_ptr<BaseMapper> MapperFactory::InitializeFromFile(NesConsole* console, Vi
 	result = LoadRomResult::UnknownType;
 	return nullptr;
 }
-

@@ -118,6 +118,13 @@ CXXFLAGS = -fPIC -Wall --std=c++17 $(MESENFLAGS) $(SDL2INC) -I $(realpath ./) -I
 OBJCXXFLAGS = $(CXXFLAGS)
 CFLAGS = -fPIC -Wall $(MESENFLAGS)
 
+# Optional FC PICO host cartridge model, built by the parent repository.
+# Leave ordinary Mesen builds independent of that repository.
+ifneq ($(FCPICO_ROOT),)
+	CXXFLAGS += -DFCPICO -I$(FCPICO_ROOT)/doom/sim/cartmodel -I$(FCPICO_ROOT)/doom/fcbus
+	FCPICO_LIBS := $(FCPICO_BUILD)/sim/cartmodel/libfcpico_cartmodel.a $(FCPICO_BUILD)/fcbus/libfcbus_host.a $(FCPICO_BUILD)/fcbus/libfcbus_core.a
+endif
+
 OBJFOLDER := obj.$(MESENPLATFORM)
 DEBUGFOLDER := bin/$(MESENPLATFORM)/Debug
 RELEASEFOLDER := bin/$(MESENPLATFORM)/Release
@@ -225,10 +232,10 @@ pgohelper: InteropDLL/$(OBJFOLDER)/$(SHAREDLIB)
 %.o: %.mm
 	$(CXX) $(OBJCXXFLAGS) -c $< -o $@
 
-InteropDLL/$(OBJFOLDER)/$(SHAREDLIB): $(SEVENZIPOBJ) $(LUAOBJ) $(UTILOBJ) $(COREOBJ) $(SDLOBJ) $(LIBEVDEVOBJ) $(LINUXOBJ) $(DLLOBJ) $(MACOSOBJ)
+InteropDLL/$(OBJFOLDER)/$(SHAREDLIB): $(SEVENZIPOBJ) $(LUAOBJ) $(UTILOBJ) $(COREOBJ) $(SDLOBJ) $(LIBEVDEVOBJ) $(LINUXOBJ) $(DLLOBJ) $(MACOSOBJ) $(FCPICO_LIBS)
 	mkdir -p bin
 	mkdir -p InteropDLL/$(OBJFOLDER)
-	$(CXX) $(CXXFLAGS) $(LINKOPTIONS) $(LINKCHECKUNRESOLVED) -shared -o $(SHAREDLIB) $(DLLOBJ) $(SEVENZIPOBJ) $(LUAOBJ) $(LINUXOBJ) $(MACOSOBJ) $(LIBEVDEVOBJ) $(UTILOBJ) $(SDLOBJ) $(COREOBJ) $(SDL2INC) -pthread $(FSLIB) $(SDL2LIB) $(LIBEVDEVLIB) $(X11LIB)
+	$(CXX) $(CXXFLAGS) $(LINKOPTIONS) $(LINKCHECKUNRESOLVED) -shared -o $(SHAREDLIB) $(DLLOBJ) $(SEVENZIPOBJ) $(LUAOBJ) $(LINUXOBJ) $(MACOSOBJ) $(LIBEVDEVOBJ) $(UTILOBJ) $(SDLOBJ) $(COREOBJ) $(FCPICO_LIBS) $(SDL2INC) -pthread $(FSLIB) $(SDL2LIB) $(LIBEVDEVLIB) $(X11LIB)
 	cp $(SHAREDLIB) bin/pgohelperlib.so
 	mv $(SHAREDLIB) InteropDLL/$(OBJFOLDER)
 
