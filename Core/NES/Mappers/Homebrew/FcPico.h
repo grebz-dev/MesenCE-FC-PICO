@@ -9,7 +9,7 @@
 #include "fcpico_cart.h"
 
 // NES CPU/PPU integration only: the cartridge executes the native host bus model,
-// not ARM instructions. CS1 selection is an explicit, uncalibrated board hypothesis.
+// not ARM instructions. Rendering selection matches the NES-001 hardware trace.
 class FcPico : public BaseMapper
 {
 	uint16_t _cs1Mask = 0xF000;
@@ -74,6 +74,26 @@ class FcPico : public BaseMapper
 		_trace.flush();
 	}
 
+	bool IsSelectedRenderingRead(uint16_t addr)
+	{
+		if((addr & _cs1Mask) != 0) { return false; }
+		// The optional 0xe000 diagnostic includes sprite-pattern reads. The
+		// physical 0xf000 decode excludes them.
+		if((addr & 0x1000) != 0) { return true; }
+
+		NesPpuState ppu;
+		_console->GetPpu()->GetState(ppu);
+		// Trace 6: pre-render selects 31 in-line tile pairs plus two
+		// prefetch pairs (66 bytes); visible lines select 30 plus two (64).
+		if(ppu.Scanline == -1) {
+			return ppu.Cycle <= 247 || ppu.Cycle >= 321;
+		}
+		if(ppu.Scanline >= 0 && ppu.Scanline < 240) {
+			return ppu.Cycle <= 239 || ppu.Cycle >= 321;
+		}
+		return false;
+	}
+
 public:
 	~FcPico() override { fcpico_cart_shutdown(); }
 
@@ -81,7 +101,10 @@ public:
 	{
 		// BaseMapper::DebugReadVram bypasses this hook and uses InternalReadVram.
 		// Count only actual renderer fetches and CPU $2007 reads, once per access.
-		if((addr & _cs1Mask) == 0 &&
+		bool selected = type == MemoryOperationType::PpuRenderingRead
+			? IsSelectedRenderingRead(addr)
+			: (addr & _cs1Mask) == 0;
+		if(selected &&
 			(type == MemoryOperationType::PpuRenderingRead || type == MemoryOperationType::Read)) {
 			if(type == MemoryOperationType::PpuRenderingRead) { ++_renderReads; }
 			else { ++_cpuReads; }

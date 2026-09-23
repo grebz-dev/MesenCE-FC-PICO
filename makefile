@@ -122,7 +122,7 @@ CFLAGS = -fPIC -Wall $(MESENFLAGS)
 # Leave ordinary Mesen builds independent of that repository.
 ifneq ($(FCPICO_ROOT),)
 	CXXFLAGS += -DFCPICO -I$(FCPICO_ROOT)/doom/sim/cartmodel -I$(FCPICO_ROOT)/doom/fcbus
-	FCPICO_LIBS := $(FCPICO_BUILD)/sim/cartmodel/libfcpico_cartmodel.a $(FCPICO_BUILD)/fcbus/libfcbus_host.a $(FCPICO_BUILD)/fcbus/libfcbus_core.a
+	FCPICO_LIBS := $(FCPICO_BUILD)/sim/cartmodel/libfcpico_cartmodel.a $(FCPICO_BUILD)/testpattern/libfcpico_testpattern_app.a $(FCPICO_BUILD)/fcbus/libfcbus_host.a $(FCPICO_BUILD)/fcbus/libfcbus_core.a
 endif
 
 OBJFOLDER := obj.$(MESENPLATFORM)
